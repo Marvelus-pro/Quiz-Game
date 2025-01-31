@@ -1,0 +1,121 @@
+#import necessary libraries
+from tkinter import *
+from tkinter import ttk
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from openpyxl import load_workbook as lw
+from openpyxl import Workbook as wb
+
+#windows initialization
+root=Tk()
+root.configure(bg="azure")
+root.title("Stat Page")
+title=Label(root, text="QUIZ LARK", bg="azure",fg="black", font=("Comic Sans", 37, "bold"), highlightbackground="white")
+title.pack(pady=20)
+
+#load user data base and fill in the necessary variables.
+file=lw("users database.xlsx")
+sheet=file.active
+#specify player's number
+i=1
+username=sheet[f"A{i}"].value
+
+#welcome user
+sub_title=Label(root, text=f"{username}'s STATISTICS", bg="white", fg="black",font=("Great Vibes",10,"bold"))
+sub_title.pack()
+
+#statistics frame build up
+frame =Frame(root, bg="steelblue", bd=3, relief="ridge")
+frame.pack(side=LEFT, fill=BOTH,expand=False)
+title=Label(frame, text="STATISTICS", bg="steelblue", fg="white", font=("Garamond Bold",30,"bold"))
+title.pack(pady=10)
+
+#variables
+ttl_question=int(sheet[f"D{i}"].value)
+correct_ans=int(sheet[f"E{i}"].value)
+wrong_ans=int(sheet[f"F{i}"].value)
+game_played=int(sheet[f"G{i}"].value)
+games_won=int(sheet[f"H{i}"].value)
+streak=int(sheet[f"I{i}"].value)
+xp=int(sheet[f"J{i}"].value)
+#selcetion to prevent logic error
+if ttl_question==0:
+    correct_percent=0
+    wrong_percent=0
+else:
+    correct_percent=round((correct_ans*100)/ttl_question)
+    wrong_percent=round((wrong_ans*100)/ttl_question)
+
+# Data List using nested lists...
+stats = [
+    ["- Questions answered", ttl_question],
+    ["- Correct answers", correct_ans],
+    ["- Wrong answers", wrong_ans],
+    ["- Correct percentage", correct_percent],
+    ["- Wrong Percentage", wrong_percent],
+    ["- Games played", game_played],
+    ["- Games won", games_won],
+    ["- Streak", streak],
+    ["- XP(Experience points)", xp],
+]
+
+leaderboard_data = []
+
+for i in range(1,11):
+    leaderboard_data.append([sheet[f"A{i}"].value,sheet[f"J{i}"].value,sheet[f"I{i}"].value,sheet[f"H{i}"].value,sheet[f"C{i}"].value])
+
+# Display the statistics in frame
+for text, value in stats:
+    row_frame = Frame(frame, bg="azure")
+    row_frame.pack(fill="x", padx=10, pady=3)
+
+    label = Label(row_frame, text=text, font=("papyrus", 11,"bold"), bg="azure", fg="black", anchor="w")
+    label.pack(side="left")
+
+    value_label = Label(row_frame, text=value, font=("Good Vibes", 11, "bold"), bg="azure", fg="black", anchor="e")
+    value_label.pack(side="right")
+
+
+#figure/pie size
+figure=Figure(figsize=(6,5),dpi=80)
+subplot=figure.add_subplot(111)
+
+#selcetion to prevent logic error
+if correct_percent ==0 and wrong_percent==0:
+    labels=["Fresh Player"]
+    sizes=[100]
+    colors=["powderblue"]
+    explode=[0]
+else:
+    labels=['Correct %','Wrong %']
+    sizes=[correct_percent,wrong_percent]
+    colors=["powderblue","steelblue"]
+    explode=[0.1,0]
+
+subplot.pie(sizes,labels=labels,colors=colors,explode=explode,autopct='%1.1f%%')
+canvas=FigureCanvasTkAgg(figure,master=root)
+canvas.draw()
+
+canvas.get_tk_widget().pack(fill="x",expand=True)
+
+# leaderboard frame
+leaderboard_frame =Frame(root, bg="steelblue", padx=10, pady=10)
+leaderboard_frame.pack(fill="x",expand=True)
+
+Label(leaderboard_frame, text="LEADERBOARDS", font=("Arial", 12, "bold"), bg="white").pack(anchor=NW)
+
+cols = ("Username", "XP", "Streak", "Games Won", "Name")
+view = ttk.Treeview(leaderboard_frame, columns=cols, show="headings")
+
+#fill in values using the for loop 
+for col in cols:
+    view.heading(col, text=col)
+    view.column(col, width=150)
+
+for row in leaderboard_data:
+    view.insert("", "end", values=row)
+
+view.pack(fill=BOTH,expand=True)
+
+#intialize the program
+root.mainloop()
